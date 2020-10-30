@@ -1,6 +1,11 @@
 
-
+#include "Matrix.h"
 #include <gtest.h>
+
+TEST(TMatrix, can_create_matrix)
+{
+	ASSERT_NO_THROW(TMatrix<int> A(3));
+}
 
 /*TEST(TSet, can_get_max_power_set)
 {
