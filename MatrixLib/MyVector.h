@@ -1,221 +1,196 @@
-#ifndef _MY_VECTOR_
-#define _MY_VECTOR_
+#ifndef _MY_VECTOR_H_
+#define _MY_VECTOR_H_
 
 #include <iostream>
-
 using namespace std;
 
-template <class T>
-class Vector
+const int MAX_VECTOR_SIZE = 100000000;
+const int MAX_MATRIX_SIZE = 10000;
+
+template <class ValType>
+class TVector
 {
 protected:
-    int length;
-    T* x;
+  ValType* pVector;
+  int Size;       // размер вектора
+  int StartIndex; // индекс первого элемента вектора
 public:
-    Vector<T>* vec;
-    Vector();
-    Vector(T _v);
-    Vector(int rowsCount, T* _v);
-    Vector(int rowsCount, T _v);
-    Vector(const Vector<T>& _v);
-    virtual ~Vector();
+  TVector(int s = 10, int si = 0);
+  TVector(const TVector& v);                // конструктор копировани§
+  ~TVector();
+  int GetSize() { return Size; } // размер вектора
+  int GetStartIndex() { return StartIndex; } // индекс первого элемента
+  ValType& operator[](int pos);             // доступ
+  bool operator==(const TVector& v) const;  // сравнение
+  bool operator!=(const TVector& v) const;  // сравнение
+  TVector& operator=(const TVector& v);     // присваивание
+    // скал§рные операции
+  TVector  operator+(const ValType& val);   // прибавить скал§р
+  TVector  operator-(const ValType& val);   // вычесть скал§р
+  TVector  operator*(const ValType& val);   // умножить на скал§р
+    // векторные операции
+  TVector  operator+(const TVector& v);     // сложение
+  TVector  operator-(const TVector& v);     // вычитание
+  ValType  operator*(const TVector& v);     // скал€рное произведение
 
-    Vector<T> operator +(const Vector<T>& _v);
-    Vector<T> operator -(Vector<T>& _v);
-    Vector<T> operator *(Vector<T>& _v);
-    Vector<T> operator /(Vector<T>& _v);
-    Vector<T>& operator =(const Vector<T>& _v);
-    T& operator[] (const int index);
-
-    Vector<T>& operator ++();
-    Vector<T>& operator --();
-    Vector<T>& operator +=(Vector<T>& _v);
-    Vector<T>& operator -=(Vector<T>& _v);
-
-    template <class T1>
-    friend ostream& operator << (ostream& ostr, const Vector<T1>& A);
-    template <class T1>
-    friend istream& operator >> (istream& istr, Vector<T1>& A);
-
-    int Length();
+  friend std::istream& operator>>(std::istream& in, TVector& v)
+  {
+    for (int i = 0; i < v.Size; i++)
+      in >> v.pVector[i];
+    return in;
+  }
+  friend std::ostream& operator<<(std::ostream& out, const TVector& v)
+  {
+    for (int i = 0; i < v.Size; i++)
+      out << v.pVector[i] << ' ';
+    return out;
+  }
 };
 
-template <class T1>
-ostream& operator<< (ostream& ostr, const Vector<T1>& A) {
-    for (int i = 0; i < A.length; i++) {
-        ostr << A.x[i] << endl;
-    }
-    return ostr;
+template <typename ValType>
+TVector<ValType>::TVector(int s, int si)
+{
+  if ((s < 0) || (s >= MAX_VECTOR_SIZE)) throw "negative or too large vector size";
+  if (si < 0) throw "negative or too large startindex";
+  Size = s;
+  StartIndex = si;
+  pVector = new ValType[s];
+  for (int i = 0; i < s; i++)
+    pVector[i] = 0;
 }
 
-template <class T1>
-istream& operator >> (istream& istr, Vector<T1>& A) {
-    for (int i = 0; i < A.length; i++) {
-        istr >> A.x[i];
-    }
-    return istr;
+template <typename ValType>
+TVector<ValType>::TVector(const TVector& v)
+{
+  Size = v.Size;
+  StartIndex = v.StartIndex;
+  pVector = new ValType[Size];
+  for (int i = StartIndex; i < Size; i++)
+    pVector[i] = v.pVector[i];
 }
 
-#define MIN(a,b)(a>b?b:a)
-#define MAX(a,b)(a>b?a:b)
+template<typename ValType>
+TVector<ValType>::~TVector()
+{
+  delete[] pVector;
+}
 
-template <class T>
-Vector<T>::Vector()
+template<typename ValType>
+ValType& TVector<ValType>::operator[](int pos)
 {
-    length = 0;
-    x = 0;
+  if ((pos < StartIndex) || (pos >= Size))
+    throw "Wrong position";
+  return pVector[pos];
 }
-template <class T>
-Vector<T>::Vector(T _v)
-{
-    length = 1;
-    x = new T[length];
-    x[0] = _v;
-}
-template <class T>
-Vector<T>::Vector(int rowsCount, T* _v)
-{
-    length = rowsCount;
 
-    ///x = _v;
-
-    x = new T[length];
-    for (int i = 0; i < length; i++)
-        x[i] = _v[i];
-}
-template <class T>
-Vector<T>::Vector(int rowsCount, T _v)
+template <typename ValType>
+bool TVector<ValType>::operator==(const TVector& v) const
 {
-    length = rowsCount;
-    x = new T[length];
-    for (int i = 0; i < length; i++)
-        x[i] = _v;
-}
-template <class T>
-Vector<T>::Vector(const Vector<T>& _v)
-{
-    length = _v.length;
-    x = new T[length];
-    for (int i = 0; i < length; i = i + 1)
-        x[i] = _v.x[i];
-}
-template <class T>
-Vector<T>::~Vector()
-{
-    length = 0;
-    if (x != 0)
-        delete[] x;
-    x = 0;
-}
-template <class T>
-Vector<T> Vector<T>::operator +(const Vector<T>& _v)
-{
-    Vector<T> res;
-    res.length = MIN(length, _v.length);
-    res.x = new T[res.length];
-    for (int i = 0; i < res.length; i++)
-    {
-        res.x[i] = x[i] + _v.x[i];
-    }
+  bool res = true;
+  if (this == &v)
     return res;
-}
-template <class T>
-Vector<T> Vector<T>::operator -(Vector<T>& _v)
-{
-    Vector<T> res;
-    res.length = MIN(length, _v.length);
-    res.x = new T[res.length];
-    for (int i = 0; i < res.length; i++)
+  if ((Size != v.Size) || (StartIndex != v.StartIndex))
+    res = false;
+  else for (int i = StartIndex; i < Size; i++)
+    if (pVector[i] != v.pVector[i]) 
     {
-        res.x[i] = x[i] - _v.x[i];
+      res = false;
+      break;
     }
-    return res;
+  return res;
 }
-template <class T>
-Vector<T> Vector<T>::operator *(Vector<T>& _v)
+
+template <typename ValType>
+bool TVector<ValType>::operator!=(const TVector& v) const
 {
-    Vector<T> res;
-    res.length = MIN(length, _v.length);
-    res.x = new T[res.length];
-    for (int i = 0; i < res.length; i++)
+  bool res = false;
+  if (this == &v) return res;
+  if ((Size != v.Size) || (StartIndex != v.StartIndex))
+    res = true;
+  else for (int i = StartIndex; i < Size; i++)
+    if (pVector[i] != v.pVector[i]) 
     {
-        res.x[i] = x[i] * _v.x[i];
+      res = true;
+      break;
     }
-    return res;
+  return res;
 }
-template <class T>
-Vector<T> Vector<T>::operator /(Vector<T>& _v)
 
+template <typename ValType>
+TVector<ValType>& TVector<ValType>::operator=(const TVector& v)
 {
-    Vector<T> res;
-    res.length = MIN(length, _v.length);
-    res.x = new T[res.length];
-    for (int i = 0; i < res.length; i++)
+  if (this != &v)
+  {
+    if (Size != v.Size)
     {
-        res.x[i] = x[i] / _v.x[i];
+       Size = v.Size;
+       delete[] pVector;
+       pVector = new ValType[Size];
     }
-    return res;
-}
-template <class T>
-Vector<T>& Vector<T>::operator =(const Vector<T>& _v)
-{
-    if (this == &_v)
-        return *this;
-
-    length = _v.length;
-    x = new T[length];
-    for (int i = 0; i < length; i++)
-        x[i] = _v.x[i];
-    return *this;
-}
-template <class T>
-T& Vector<T>::operator[] (const int index)
-{
-    if ((index >= 0) && (index < length))
-        return x[index];
-    return x[0];
+     StartIndex = v.StartIndex;
+     for (int i = 0; i < Size; i++)
+       pVector[i] = v.pVector[i];
+  }
+  return *this;
 }
 
-template <class T>
-Vector<T>& Vector<T>::operator ++()
+template <typename ValType>
+TVector<ValType> TVector<ValType>::operator+(const ValType& val)
 {
-    for (int i = 0; i < length; i++)
-        x[i]++;
-    return *this;
-}
-template <class T>
-Vector<T>& Vector<T>::operator --()
-{
-    for (int i = 0; i < length; i++)
-        x[i]--;
-    return *this;
-}
-template <class T>
-Vector<T>& Vector<T>::operator +=(Vector<T>& _v)
-{
-    length = MIN(length, _v.length);
-    for (int i = 0; i < length; i++)
-    {
-        x[i] += _v.x[i];
-    }
-    return *this;
-}
-template <class T>
-Vector<T>& Vector<T>::operator -=(Vector<T>& _v)
-{
-    length = MIN(length, _v.length);
-    for (int i = 0; i < length; i++)
-    {
-        x[i] -= _v.x[i];
-    }
-    return *this;
-}
-template <class T>
-int Vector<T>::Length()
-{
-    return length;
+  TVector sum(Size, StartIndex);
+  for (int i = StartIndex; i < Size; i++)
+    sum.pVector[i] = pVector[i] + val;
+  return sum;
 }
 
+template <typename ValType>
+TVector<ValType> TVector<ValType>::operator-(const ValType& val)
+{
+  TVector sum(Size, StartIndex);
+  for (int i = StartIndex; i < Size; i++)
+    sum.pVector[i] = pVector[i] - val;
+  return sum;
+}
 
+template<typename ValType>
+TVector<ValType> TVector<ValType>::operator*(const ValType& val)
+{
+  TVector comp(Size, StartIndex);
+  for (int i = StartIndex; i < Size; i++)
+    comp.pVector[i] = pVector[i] * val;
+  return comp;
+}
 
+template<typename ValType>
+TVector<ValType> TVector<ValType>::operator+(const TVector& v)
+{
+  if ((Size != v.Size) || (StartIndex != v.StartIndex))
+    throw "Wrong size";
+  TVector sum(Size, StartIndex);
+  for (int i = StartIndex; i < Size; i++)
+    sum.pVector[i] = pVector[i] + v.pVector[i];
+  return sum;
+}
+
+template<typename ValType>
+TVector<ValType> TVector<ValType>::operator-(const TVector& v)
+{
+  if ((Size != v.Size) || (StartIndex != v.StartIndex))
+    throw "Wrong size";
+  TVector sum(Size, StartIndex);
+  for (int i = StartIndex; i < Size; i++)
+    sum.pVector[i] = pVector[i] - v.pVector[i];
+  return sum;
+}
+
+template<typename ValType>
+ValType TVector<ValType>::operator*(const TVector& v)
+{
+  if ((Size != v.Size) || (StartIndex != v.StartIndex))
+    throw "Wrong size";
+  ValType comp = 0;
+  for (int i = StartIndex; i < Size; i++)
+    comp += pVector[i] * v.pVector[i];
+  return comp;
+}
 #endif
